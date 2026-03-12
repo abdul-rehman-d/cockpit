@@ -1,18 +1,10 @@
+# yaml-language-server: $schema=schema.json
+
 version: 2
 
 project_name: cockpit
 
 builds:
-  - id: cockpit-windows-amd64
-    main: ./cmd/tui
-    binary: cockpit
-    env:
-      - CGO_ENABLED=0
-    goos:
-      - windows
-    goarch:
-      - amd64
-
   - id: cockpit-linux-amd64
     main: ./cmd/tui
     binary: cockpit
@@ -33,29 +25,9 @@ builds:
     goarch:
       - arm64
 
-  - id: cockpit-macos-amd64
-    main: ./cmd/tui
-    binary: cockpit
-    env:
-      - CGO_ENABLED=0
-    goos:
-      - darwin
-    goarch:
-      - amd64
-
-  - id: cockpit-macos-arm64
-    main: ./cmd/tui
-    binary: cockpit
-    env:
-      - CGO_ENABLED=0
-    goos:
-      - darwin
-    goarch:
-      - arm64
-
 archives:
-  - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
-    format: binary
+  - format: binary
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 
 checksum:
   name_template: checksums.txt
