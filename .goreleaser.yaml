@@ -1,0 +1,106 @@
+version: 2
+
+project_name: cockpit
+
+builds:
+  - id: cockpit-windows-amd64
+    main: ./cmd/tui
+    binary: cockpit
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - windows
+    goarch:
+      - amd64
+
+  - id: cockpit-windows-386
+    main: ./cmd/tui
+    binary: cockpit
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - windows
+    goarch:
+      - "386"
+
+  - id: cockpit-linux-amd64
+    main: ./cmd/tui
+    binary: cockpit
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+
+  - id: cockpit-linux-386
+    main: ./cmd/tui
+    binary: cockpit
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - "386"
+
+  - id: cockpit-linux-arm64
+    main: ./cmd/tui
+    binary: cockpit
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - arm64
+
+  - id: cockpit-linux-armv7
+    main: ./cmd/tui
+    binary: cockpit
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - arm
+    goarm:
+      - "7"
+
+  - id: cockpit-darwin-amd64
+    main: ./cmd/tui
+    binary: cockpit
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+    goarch:
+      - amd64
+
+  - id: cockpit-darwin-arm64
+    main: ./cmd/tui
+    binary: cockpit
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+    goarch:
+      - arm64
+
+universal_binaries:
+  - id: cockpit-darwin-universal
+    replace: false
+    ids:
+      - cockpit-darwin-amd64
+      - cockpit-darwin-arm64
+
+archives:
+  - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
