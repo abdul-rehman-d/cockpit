@@ -108,7 +108,7 @@ func (m Model) View() tea.View {
 	// 3 = one line for index, one line for bottom padding and one line for line between the help and the main content
 	availableHeight := m.height - 3 - strings.Count(helpView, "\n")
 
-	s := ""
+	s := "\n"
 
 	samples := m.service.GetAllSamples()
 	for _, sample := range samples {
@@ -120,9 +120,7 @@ func (m Model) View() tea.View {
 
 	s += "\n" + helpView
 
-	mainWindow := lipgloss.NewStyle().
-		Background(utils.DraculaBackground).
-		Width(m.width)
+	mainWindow := lipgloss.NewStyle().Width(m.width)
 
 	view := tea.NewView(mainWindow.Render(s))
 	view.AltScreen = true

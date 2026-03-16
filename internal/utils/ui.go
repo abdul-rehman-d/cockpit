@@ -7,11 +7,11 @@ import (
 )
 
 var (
-	DraculaBackground = lipgloss.Color("#282A36")
-	DraculaForeground = lipgloss.Color("#F8F8F2")
-	DraculaComment    = lipgloss.Color("#6272A4")
-	DraculaPurple     = lipgloss.Color("#BD93F9")
-	DraculaPink       = lipgloss.Color("#FF79C6")
+	// ANSI 16-color palette (4-bit) for broad TTY support.
+	DraculaForeground = lipgloss.Color("7")
+	DraculaComment    = lipgloss.Color("8")
+	DraculaPurple     = lipgloss.Color("5")
+	DraculaPink       = lipgloss.Color("13")
 )
 
 var NormalTextStyle = lipgloss.NewStyle().Foreground(DraculaForeground)
@@ -19,17 +19,17 @@ var NormalTextStyle = lipgloss.NewStyle().Foreground(DraculaForeground)
 func NewDraculaProgress() progress.Model {
 	p := progress.New(
 		progress.WithScaled(true),
-		progress.WithColors(DraculaPurple, DraculaPink),
+		progress.WithFillCharacters('█', ' '),
+		progress.WithColors(DraculaPurple),
 	)
-	p.EmptyColor = DraculaComment
-	p.PercentageStyle = NormalTextStyle.Background(DraculaBackground)
+	p.PercentageStyle = NormalTextStyle
 	p.PercentFormat = " %05.2f%%"
 	return p
 }
 
 func DraculaHelpStyles() help.Styles {
 	styles := help.DefaultDarkStyles()
-	commentStyle := lipgloss.NewStyle().Background(DraculaBackground).Foreground(DraculaComment)
+	commentStyle := lipgloss.NewStyle().Foreground(DraculaComment)
 
 	styles.Ellipsis = commentStyle
 	styles.ShortKey = commentStyle
