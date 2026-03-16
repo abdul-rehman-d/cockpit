@@ -2,161 +2,111 @@ package main
 
 import (
 	"fmt"
-	"strings"
-	"time"
+	"os"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
 )
-
-const tickRate = time.Second
-
-var (
-	draculaBg      = lipgloss.Color("#282A36")
-	draculaFg      = lipgloss.Color("#F8F8F2")
-	draculaCyan    = lipgloss.Color("#8BE9FD")
-	draculaGreen   = lipgloss.Color("#50FA7B")
-	draculaComment = lipgloss.Color("#6272A4")
-	draculaPink    = lipgloss.Color("#FF79C6")
-)
-
-type tickMsg time.Time
 
 type model struct {
-	width    int
-	height   int
-	start    time.Time
-	lastTick time.Time
-	ticks    int
-	realFPS  float64
-	now      time.Time
-	blinkOn  bool
-	ready    bool
+	choices  []string         // items on the to-do list
+	cursor   int              // which to-do list item our cursor is pointing at
+	selected map[int]struct{} // which to-do items are selected
 }
 
-func newModel() model {
-	now := time.Now()
+func initialModel() model {
 	return model{
-		start:    now,
-		lastTick: now,
-		now:      now,
-		blinkOn:  true,
+		// Our to-do list is a grocery list
+		choices: []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
+
+		// A map which indicates which choices are selected. We're using
+		// the map like a mathematical set. The keys refer to the indexes
+		// of the `choices` slice, above.
+		selected: make(map[int]struct{}),
 	}
 }
 
-func nextTick() tea.Cmd {
-	return tea.Tick(tickRate, func(t time.Time) tea.Msg {
-		return tickMsg(t)
-	})
-}
-
 func (m model) Init() tea.Cmd {
-	return nextTick()
+	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+
+	// Is it a key press?
+	case tea.KeyPressMsg:
+
+		// Cool, what was the actual key pressed?
 		switch msg.String() {
-		case "q", "esc", "ctrl+c":
+
+		// These keys should exit the program.
+		case "ctrl+c", "q":
 			return m, tea.Quit
-		}
 
-	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
-		m.ready = true
+		// The "up" and "k" keys move the cursor up
+		case "up", "k":
+			if m.cursor > 0 {
+				m.cursor--
+			}
 
-	case tickMsg:
-		now := time.Time(msg)
-		delta := now.Sub(m.lastTick)
-		if delta > 0 {
-			m.realFPS = 1 / delta.Seconds()
+		// The "down" and "j" keys move the cursor down
+		case "down", "j":
+			if m.cursor < len(m.choices)-1 {
+				m.cursor++
+			}
+
+		// The enter key and the space bar toggle the selected state for the
+		// item that the cursor is pointing at.
+		case "enter", "space":
+			_, ok := m.selected[m.cursor]
+			if ok {
+				delete(m.selected, m.cursor)
+			} else {
+				m.selected[m.cursor] = struct{}{}
+			}
 		}
-		m.lastTick = now
-		m.now = now
-		m.blinkOn = !m.blinkOn
-		m.ticks++
-		return m, nextTick()
 	}
 
+	// Return the updated model to the Bubble Tea runtime for processing.
+	// Note that we're not returning a command.
 	return m, nil
 }
 
-func (m model) View() string {
-	if !m.ready {
-		return "Booting cockpit..."
+func (m model) View() tea.View {
+	// The header
+	s := "What should we buy at the market?\n\n"
+
+	// Iterate over our choices
+	for i, choice := range m.choices {
+
+		// Is the cursor pointing at this choice?
+		cursor := " " // no cursor
+		if m.cursor == i {
+			cursor = ">" // cursor!
+		}
+
+		// Is this choice selected?
+		checked := " " // not selected
+		if _, ok := m.selected[i]; ok {
+			checked = "x" // selected!
+		}
+
+		// Render the row
+		s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice)
 	}
 
-	innerWidth := max(1, m.width-2)
-	innerHeight := max(1, m.height-2)
+	// The footer
+	s += "\nPress q to quit.\n"
 
-	uptime := m.now.Sub(m.start).Round(time.Second)
-	statsText := fmt.Sprintf("fps: %4.1f  uptime: %s", m.realFPS, uptime)
-
-	colon := ":"
-	if !m.blinkOn {
-		colon = " "
-	}
-	clockText := fmt.Sprintf("%s%s%s", m.now.Format("15"), colon, m.now.Format("04"))
-
-	statsLine := lipgloss.NewStyle().Foreground(draculaGreen).Render(statsText)
-	clockLine := lipgloss.NewStyle().Bold(true).Foreground(draculaPink).Render(clockText)
-	footerLine := lipgloss.NewStyle().Foreground(draculaComment).Render("Press q / esc to quit")
-
-	lines := make([]string, innerHeight)
-	for i := range lines {
-		lines[i] = strings.Repeat(" ", innerWidth)
-	}
-
-	lines[0] = padOrTrim(statsLine, innerWidth)
-
-	clockRow := innerHeight / 2
-	lines[clockRow] = centerText(clockLine, innerWidth)
-
-	lines[innerHeight-1] = padOrTrim(footerLine, innerWidth)
-
-	content := strings.Join(lines, "\n")
-
-	panel := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(draculaCyan).
-		Foreground(draculaFg).
-		Background(draculaBg).
-		Width(innerWidth).
-		Height(innerHeight).
-		Render(content)
-
-	return lipgloss.NewStyle().Background(draculaBg).Render(panel)
-}
-
-func padOrTrim(s string, width int) string {
-	if width <= 0 {
-		return ""
-	}
-	w := lipgloss.Width(s)
-	if w >= width {
-		return lipgloss.NewStyle().MaxWidth(width).Render(s)
-	}
-	return s + strings.Repeat(" ", width-w)
-}
-
-func centerText(s string, width int) string {
-	if width <= 0 {
-		return ""
-	}
-	w := lipgloss.Width(s)
-	if w >= width {
-		return lipgloss.NewStyle().MaxWidth(width).Render(s)
-	}
-	left := (width - w) / 2
-	right := width - w - left
-	return strings.Repeat(" ", left) + s + strings.Repeat(" ", right)
+	// Send the UI for rendering
+	view := tea.NewView(s)
+	view.AltScreen = true
+	return view
 }
 
 func main() {
-	p := tea.NewProgram(newModel(), tea.WithAltScreen())
+	p := tea.NewProgram(initialModel())
 	if _, err := p.Run(); err != nil {
-		fmt.Printf("error: %v\n", err)
+		fmt.Printf("Alas, there's been an error: %v", err)
+		os.Exit(1)
 	}
 }
