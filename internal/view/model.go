@@ -10,14 +10,10 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/abdul-rehman-d/cockpit/internal/usage"
+	"github.com/abdul-rehman-d/cockpit/internal/utils"
 )
 
 type tickMsg time.Time
-
-var (
-	yellow = lipgloss.Color("#FDFF8C")
-	pink   = lipgloss.Color("#FF7CCB")
-)
 
 type Model struct {
 	// help menu thingy
@@ -40,10 +36,14 @@ type Model struct {
 
 	// misc ui stuff
 	maxSampleNameLength int
+	textStyle           lipgloss.Style
 }
 
 func NewModel() Model {
 	service := usage.NewService()
+	helpModel := help.New()
+	helpModel.Styles = utils.DraculaHelpStyles()
+
 	samples := service.GetAllSamples()
 	maxSampleNameLength := 0
 	for _, sample := range samples {
@@ -51,13 +51,14 @@ func NewModel() Model {
 	}
 	return Model{
 		keys: keys,
-		help: help.New(),
+		help: helpModel,
 
-		prog: progress.New(progress.WithScaled(true), progress.WithColors(pink, yellow)),
+		prog: utils.NewDraculaProgress(),
 
 		service: service,
 
 		maxSampleNameLength: maxSampleNameLength,
+		textStyle:           utils.NormalTextStyle,
 	}
 }
 
@@ -117,17 +118,23 @@ func (m Model) View() tea.View {
 	availableHeight -= strings.Count(s, "\n")
 	s += strings.Repeat("\n", availableHeight)
 
-	view := tea.NewView(s + "\n" + helpView)
+	s += "\n" + helpView
+
+	mainWindow := lipgloss.NewStyle().
+		Background(utils.DraculaBackground).
+		Width(m.width)
+
+	view := tea.NewView(mainWindow.Render(s))
 	view.AltScreen = true
 	return view
 }
 
 func (m Model) renderSample(sample usage.Sample) string {
-	row1 := sample.Name +
-		strings.Repeat(" ", m.maxSampleNameLength-len(sample.Name)+1) +
+	row1 := m.textStyle.Render(sample.Name+
+		strings.Repeat(" ", m.maxSampleNameLength-len(sample.Name)+1)) +
 		m.prog.ViewAs(sample.Value)
 	row2 := strings.Repeat(" ", m.maxSampleNameLength+1) +
-		sample.ValueInWords
+		m.textStyle.Render(sample.ValueInWords)
 
 	return row1 + "\n" + row2 + "\n\n"
 }

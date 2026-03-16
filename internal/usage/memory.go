@@ -36,7 +36,7 @@ func (m *MemoryCollector) Sample() (Sample, error) {
 		Key:          m.Key(),
 		Name:         "Memory Usage",
 		Value:        usage,
-		ValueInWords: fmt.Sprintf("%d / %d", used, total),
+		ValueInWords: fmt.Sprintf("%s / %s", formatBytes(used), formatBytes(total)),
 	}, nil
 }
 

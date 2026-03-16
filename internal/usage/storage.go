@@ -31,7 +31,7 @@ func (m *StorageCollector) Sample() (Sample, error) {
 		Key:          m.Key(),
 		Name:         "Storage Usage",
 		Value:        usage,
-		ValueInWords: fmt.Sprintf("%d used of %d", used, total),
+		ValueInWords: fmt.Sprintf("%s used of %s", formatBytes(used), formatBytes(total)),
 	}, nil
 }
 
