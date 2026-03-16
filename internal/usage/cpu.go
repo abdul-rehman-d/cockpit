@@ -50,19 +50,19 @@ func (c *CPUCollector) Sample() (Sample, error) {
 	}
 	totalDelta := float64(sample.total - c.prev.total)
 	idleDelta := float64(sample.idle - c.prev.idle)
-	usage := (1.0 - idleDelta/totalDelta) * 100
+	usage := 1.0 - idleDelta/totalDelta
 	if usage < 0 {
 		usage = 0
 	}
-	if usage > 100 {
-		usage = 100
+	if usage > 1.0 {
+		usage = 1.0
 	}
 	c.prev = sample
 	return Sample{
 		Key:          c.Key(),
 		Name:         "CPU Usage",
 		Value:        usage,
-		ValueInWords: strconv.FormatFloat(usage, 'f', 2, 64) + "%",
+		ValueInWords: strconv.FormatFloat(usage*100, 'f', 2, 64) + "%",
 	}, nil
 }
 

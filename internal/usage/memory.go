@@ -31,7 +31,7 @@ func (m *MemoryCollector) Sample() (Sample, error) {
 			ValueInWords: err.Error(),
 		}, nil
 	}
-	usage := (float64(used) / float64(total)) * 100
+	usage := float64(used) / float64(total)
 	return Sample{
 		Key:          m.Key(),
 		Name:         "Memory Usage",
